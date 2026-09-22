@@ -101,6 +101,13 @@ describe("Game Engine", () => {
     game.update(0);
 
     expect(game.isGameOver()).toBe(true);
+
+    const xAtDeath = bird.getX();
+    const yAtDeath = bird.getY();
+    game.update(0.1);
+
+    expect(bird.getX()).toBe(xAtDeath);
+    expect(bird.getY()).toBeLessThan(yAtDeath);
   });
 
   it("increments the score after the bird clears a pipe pair", () => {
@@ -117,7 +124,7 @@ describe("Game Engine", () => {
     expect(play).toHaveBeenCalledWith("point");
   });
 
-  it("does not update after game over", () => {
+  it("does not update pipes or controllers after game over", () => {
     const decide = vi.fn(() => "none" as const);
     const game = new GameEngine([new Agent(new Bird(), { decide })]);
 
@@ -125,12 +132,14 @@ describe("Game Engine", () => {
     game.start();
     game.update(0);
     const yAtGameOver = game.getAgents()[0].getBird().getY();
+    const xAtGameOver = game.getAgents()[0].getBird().getX();
     const pipeXAtGameOver = game.getPipes()[0].getX();
 
     game.update(1);
 
     expect(decide).toHaveBeenCalledTimes(1);
-    expect(game.getAgents()[0].getBird().getY()).toBe(yAtGameOver);
+    expect(game.getAgents()[0].getBird().getY()).toBeGreaterThan(yAtGameOver);
+    expect(game.getAgents()[0].getBird().getX()).toBe(xAtGameOver);
     expect(game.getPipes()[0].getX()).toBe(pipeXAtGameOver);
   });
 

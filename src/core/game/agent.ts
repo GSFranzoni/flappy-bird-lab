@@ -23,6 +23,7 @@ export class Agent {
 
   kill() {
     this.alive = false;
+    this.bird.startFalling();
   }
 
   reset() {

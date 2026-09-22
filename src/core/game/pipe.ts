@@ -1,4 +1,4 @@
-import { PIPE_SPEED } from "@/core/game/constants";
+import { GAME_WIDTH, PIPE_SPEED } from "@/core/game/constants";
 import type { Rect } from "@/core/game/contracts";
 
 export type PipeDirection = "up" | "down";
@@ -27,6 +27,12 @@ export class Pipe {
 
   getDirection() {
     return this.direction;
+  }
+
+  isVisible() {
+    const hitbox = this.getHitbox();
+
+    return hitbox.x + hitbox.width >= 0 && hitbox.x <= GAME_WIDTH;
   }
 
   update(dt: number) {

@@ -1,4 +1,11 @@
-import { BIRD_RADIUS, BIRD_X, FLAP_VELOCITY, GAME_HEIGHT, GRAVITY } from "@/core/game/constants";
+import {
+  BIRD_RADIUS,
+  BIRD_X,
+  FLAP_VELOCITY,
+  GAME_HEIGHT,
+  GAME_WIDTH,
+  GRAVITY,
+} from "@/core/game/constants";
 import type { Circle } from "@/core/game/contracts";
 
 export class Bird {
@@ -29,6 +36,10 @@ export class Bird {
     this.velocityY = FLAP_VELOCITY;
   }
 
+  startFalling() {
+    this.velocityY = FLAP_VELOCITY;
+  }
+
   reset() {
     this.x = BIRD_X;
     this.y = GAME_HEIGHT / 2;
@@ -41,6 +52,15 @@ export class Bird {
       y: this.y,
       radius: this.radius,
     };
+  }
+
+  isVisible(): boolean {
+    return (
+      this.getHitbox().x + this.getHitbox().radius >= 0 &&
+      this.getHitbox().x - this.getHitbox().radius <= GAME_WIDTH &&
+      this.getHitbox().y + this.getHitbox().radius >= 0 &&
+      this.getHitbox().y - this.getHitbox().radius <= GAME_HEIGHT
+    );
   }
 
   update(dt: number) {

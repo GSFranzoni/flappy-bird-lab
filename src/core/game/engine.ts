@@ -55,7 +55,12 @@ export class GameEngine {
   }
 
   update(dt: number) {
-    if (this.phase !== GamePhase.Playing) {
+    if (this.phase === GamePhase.Ready) {
+      return;
+    }
+
+    if (this.phase === GamePhase.GameOver) {
+      this.updateDeadAgents(dt);
       return;
     }
 
@@ -65,6 +70,7 @@ export class GameEngine {
 
     for (const agent of this.agents) {
       if (!agent.isAlive()) {
+        this.updateDeadAgent(agent, dt);
         continue;
       }
 
@@ -116,14 +122,13 @@ export class GameEngine {
 
   private removeOffscreenPipes() {
     this.pipes = this.pipes.filter((pipe) => {
-      const hitbox = pipe.getHitbox();
-      const isOffscreen = hitbox.x + hitbox.width < 0;
+      const isVisible = pipe.isVisible();
 
-      if (isOffscreen) {
+      if (!isVisible) {
         this.scoredPipes.delete(pipe);
       }
 
-      return !isOffscreen;
+      return isVisible;
     });
   }
 
@@ -147,6 +152,16 @@ export class GameEngine {
       agent.kill();
       this.sound.play("hit");
     }
+  }
+
+  private updateDeadAgents(dt: number) {
+    for (const agent of this.agents) {
+      this.updateDeadAgent(agent, dt);
+    }
+  }
+
+  private updateDeadAgent(agent: Agent, dt: number) {
+    agent.getBird().update(dt);
   }
 
   private endGame() {

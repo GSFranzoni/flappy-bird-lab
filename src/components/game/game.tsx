@@ -9,12 +9,12 @@ import { HumanController } from "@/core/game/human";
 import { GameRenderer } from "@/core/game/renderer";
 import { useAnimationFrame } from "@/hooks/use-animation-frame";
 
-const controller = new HumanController();
+const controllers = [new HumanController(), new HumanController(), new HumanController()];
 
 const game = new GameEngine([
-  new Agent(new Bird(), controller),
-  new Agent(new Bird(), controller),
-  new Agent(new Bird(), controller),
+  new Agent(new Bird(), controllers[0]),
+  new Agent(new Bird(), controllers[1]),
+  new Agent(new Bird(), controllers[2]),
 ]);
 
 const tapKeys = ["Space", "ArrowUp"];
@@ -40,7 +40,11 @@ export function Game() {
       game.start();
     }
 
-    controller.flap();
+    controllers.forEach((controllers, index) => {
+      setTimeout(() => {
+        controllers.flap();
+      }, index * 100);
+    });
   };
 
   useEffect(() => {
