@@ -9,6 +9,7 @@ export const PIPE_WIDTH = 60;
 export const PIPE_GAP = 150;
 export const PIPE_GAP_MARGIN = 40;
 export const PIPE_SPAWN_INTERVAL = 1.5; // seconds
+export const MAX_SCORE_PER_GENERATION = 200;
 
 export const GAME_WIDTH = 400;
 export const GAME_HEIGHT = 600;

@@ -11,6 +11,7 @@ import { Evolution } from "@/core/ai/evolution";
 import { Agent } from "@/core/game/agent";
 import { NeuralController } from "@/core/game/ai";
 import { Bird } from "@/core/game/bird";
+import { MAX_SCORE_PER_GENERATION } from "@/core/game/constants";
 import { GameEngine } from "@/core/game/engine";
 import { Sound } from "@/core/game/sound";
 
@@ -190,7 +191,7 @@ export function Training() {
       const steps = speed === "MAX" ? 60 : speed;
 
       for (let step = 0; step < steps; step++) {
-        if (game.isGameOver()) {
+        if (game.isGameOver() || game.getScore() >= MAX_SCORE_PER_GENERATION) {
           const completed = getMetrics(game);
           const agents = game.getAgents();
 
