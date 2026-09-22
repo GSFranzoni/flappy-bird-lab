@@ -11,6 +11,7 @@ export type Assets = {
   birdMid: HTMLImageElement;
   birdUp: HTMLImageElement;
   gameOver: HTMLImageElement;
+  message: HTMLImageElement;
   pipe: HTMLImageElement;
   digits: HTMLImageElement[];
 };
@@ -23,6 +24,7 @@ export function loadAssets(): Assets {
     birdMid: createImage("/ui/bird-midflap.png"),
     birdUp: createImage("/ui/bird-upflap.png"),
     gameOver: createImage("/ui/gameover.png"),
+    message: createImage("/ui/message.png"),
     pipe: createImage("/ui/pipe.png"),
     digits: Array.from({ length: 10 }, (_, digit) => `/ui/${digit}.png`).map(createImage),
   };

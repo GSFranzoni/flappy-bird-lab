@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './../routes/__root'
 import { Route as IndexRouteImport } from './../routes/index'
+import { Route as PlayRouteImport } from './../routes/play'
 import { Route as TrainingRouteImport } from './../routes/training'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlayRoute = PlayRouteImport.update({
+  id: '/play',
+  path: '/play',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrainingRoute = TrainingRouteImport.update({
@@ -25,27 +31,31 @@ const TrainingRoute = TrainingRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/play': typeof PlayRoute
   '/training': typeof TrainingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/play': typeof PlayRoute
   '/training': typeof TrainingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/play': typeof PlayRoute
   '/training': typeof TrainingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/training'
+  fullPaths: '/' | '/play' | '/training'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/training'
-  id: '__root__' | '/' | '/training'
+  to: '/' | '/play' | '/training'
+  id: '__root__' | '/' | '/play' | '/training'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PlayRoute: typeof PlayRoute
   TrainingRoute: typeof TrainingRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/play': {
+      id: '/play'
+      path: '/play'
+      fullPath: '/play'
+      preLoaderRoute: typeof PlayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/training': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PlayRoute: PlayRoute,
   TrainingRoute: TrainingRoute,
 }
 export const routeTree = rootRouteImport

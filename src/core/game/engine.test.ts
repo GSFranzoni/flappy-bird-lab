@@ -88,7 +88,7 @@ describe("Game Engine", () => {
     expect(topGame.isGameOver()).toBe(true);
 
     const bottomGame = new GameEngine([agent()]);
-    bottomGame.getAgents()[0].getBird().update(0.4);
+    bottomGame.getAgents()[0].getBird().update(0.5);
     bottomGame.start();
     bottomGame.update(0.05);
     expect(bottomGame.isGameOver()).toBe(true);

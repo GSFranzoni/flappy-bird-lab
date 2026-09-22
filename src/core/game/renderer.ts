@@ -1,32 +1,54 @@
 import type { Agent } from "@/core/game/agent";
 import type { Assets } from "@/core/game/assets";
 import type { Bird } from "@/core/game/bird";
-import { FLOOR_HEIGHT, GAME_HEIGHT, GAME_WIDTH } from "@/core/game/constants";
+import { FLOOR_HEIGHT, GAME_HEIGHT, GAME_WIDTH, PIPE_SPEED } from "@/core/game/constants";
+import { GamePhase } from "@/core/game/contracts";
 import type { GameEngine } from "@/core/game/engine";
 import type { Pipe } from "@/core/game/pipe";
 
 export class GameRenderer {
+  private sceneFreezeTime = 0;
+
+  private wasGameOver = false;
+
   constructor(
     private context: CanvasRenderingContext2D,
     private assets: Assets,
   ) {}
 
   render(game: GameEngine, now: number) {
+    const isGameOver = game.isGameOver();
+
+    if (isGameOver && !this.wasGameOver) {
+      this.sceneFreezeTime = now;
+    }
+
     this.context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-    this.drawBackground();
+    const sceneTime = isGameOver ? this.sceneFreezeTime : now;
+
+    this.drawBackground(sceneTime);
     this.drawPipes(game.getPipes());
-    this.drawFloor();
+    this.drawFloor(sceneTime);
     this.drawScore(game.getScore());
 
-    if (game.isGameOver()) {
+    if (game.getPhase() === GamePhase.Ready) {
+      this.drawMessage();
+    } else if (isGameOver) {
       this.drawGameOver();
     }
 
-    this.drawBirds(game.getAgents(), now);
+    if (game.getPhase() !== GamePhase.Ready) {
+      this.drawBirds(game.getAgents(), now);
+    }
+
+    this.wasGameOver = isGameOver;
   }
 
-  private drawBackground() {
-    this.context.drawImage(this.assets.background, 0, 0, GAME_WIDTH, GAME_HEIGHT);
+  private drawBackground(now: number) {
+    const tileWidth = Math.ceil(
+      (this.assets.background.width / this.assets.background.height) * GAME_HEIGHT,
+    );
+    this.drawTiledImage(this.assets.background, 0, tileWidth, GAME_HEIGHT, now, PIPE_SPEED * 0.12);
   }
 
   private drawPipes(pipes: Pipe[]) {
@@ -74,14 +96,31 @@ export class GameRenderer {
     }
   }
 
-  private drawFloor() {
-    this.context.drawImage(
+  private drawFloor(now: number) {
+    const tileWidth = Math.ceil((this.assets.base.width / this.assets.base.height) * FLOOR_HEIGHT);
+    this.drawTiledImage(
       this.assets.base,
-      0,
       GAME_HEIGHT - FLOOR_HEIGHT,
-      GAME_WIDTH,
+      tileWidth,
       FLOOR_HEIGHT,
+      now,
+      PIPE_SPEED,
     );
+  }
+
+  private drawTiledImage(
+    image: HTMLImageElement,
+    y: number,
+    width: number,
+    height: number,
+    now: number,
+    speed: number,
+  ) {
+    const offset = Math.floor(((now / 1000) * speed) % width);
+
+    for (let x = -offset; x < GAME_WIDTH; x += width) {
+      this.context.drawImage(image, x, y, width, height);
+    }
   }
 
   private drawScore(score: number) {
@@ -94,7 +133,7 @@ export class GameRenderer {
     for (let index = 0; index < digits.length; index += 1) {
       const image = this.assets.digits[digits[index]];
       const width = widths[index];
-      this.context.drawImage(image, x, 36, width, image.height * scale);
+      this.context.drawImage(image, x, 75, width, image.height * scale);
       x += width;
     }
   }
@@ -103,5 +142,10 @@ export class GameRenderer {
     const width = 192;
     const height = 42;
     this.context.drawImage(this.assets.gameOver, (GAME_WIDTH - width) / 2, 160, width, height);
+  }
+
+  private drawMessage() {
+    const { message } = this.assets;
+    this.context.drawImage(message, (GAME_WIDTH - message.width) / 2, 170);
   }
 }
