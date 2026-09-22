@@ -8,6 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Evolution } from "@/core/ai/evolution";
+import { Agent } from "@/core/game/agent";
+import { NeuralController } from "@/core/game/ai";
+import { Bird } from "@/core/game/bird";
 import { GameEngine } from "@/core/game/engine";
 import { Sound } from "@/core/game/sound";
 
@@ -28,7 +31,11 @@ function createEvolution() {
 }
 
 function createGame(evolution: Evolution) {
-  const game = new GameEngine(evolution.getPopulation(), new Sound(false));
+  const agents = evolution
+    .getPopulation()
+    .map((individual) => new Agent(new Bird(), new NeuralController(individual.network)));
+
+  const game = new GameEngine(agents, new Sound(false));
 
   game.start();
 
@@ -185,11 +192,13 @@ export function Training() {
       for (let step = 0; step < steps; step++) {
         if (game.isGameOver()) {
           const completed = getMetrics(game);
+          const agents = game.getAgents();
 
           setAllTimeBest((best) => Math.max(best, completed.bestFitness));
 
           const evolution = evolutionRef.current!;
 
+          evolution.setFitnessResults(agents.map((agent) => agent.getFitness()));
           evolution.next();
 
           game = createGame(evolution);

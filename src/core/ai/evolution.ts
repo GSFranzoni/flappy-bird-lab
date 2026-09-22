@@ -1,12 +1,14 @@
 import { LinearLayer, NeuralNetwork, ReLULayer, SigmoidLayer } from "@/core/ai/neural-network";
-import { Agent } from "@/core/game/agent";
-import { NeuralController } from "@/core/game/ai";
-import { Bird } from "@/core/game/bird";
+
+export type Individual = {
+  network: NeuralNetwork;
+  fitness: number;
+};
 
 export class Evolution {
   private generation = 1;
 
-  private population: Agent[];
+  private population: Individual[];
 
   constructor(
     readonly populationSize: number,
@@ -14,13 +16,18 @@ export class Evolution {
     private readonly mutationRate = 0.1,
     private readonly mutationAmount = 0.2,
   ) {
+    if (populationSize <= 0) {
+      throw new Error("populationSize must be greater than 0");
+    }
+
     if (elitePercent <= 0 || elitePercent > 1) {
       throw new Error("elitePercent must be between 0 and 1");
     }
-    this.population = Array.from(
-      { length: populationSize },
-      () => new Agent(new Bird(), new NeuralController(Evolution.createNeuralNetwork())),
-    );
+
+    this.population = Array.from({ length: populationSize }, () => ({
+      network: Evolution.createNeuralNetwork(),
+      fitness: 0,
+    }));
   }
 
   static createNeuralNetwork() {
@@ -32,51 +39,47 @@ export class Evolution {
     ]);
   }
 
+  setFitnessResults(fitnessResults: readonly number[]) {
+    if (fitnessResults.length !== this.population.length) {
+      throw new Error("fitness results must match the population size");
+    }
+
+    for (let index = 0; index < this.population.length; index++) {
+      this.population[index].fitness = fitnessResults[index];
+    }
+  }
+
   next(): void {
     const parents = this.selection();
 
-    const nextPopulation: Agent[] = [];
+    const nextPopulation: Individual[] = [];
 
     for (const parent of parents) {
-      const controller = parent.getController() as NeuralController;
-
-      const network = controller.getNeuralNetwork().clone(() => Evolution.createNeuralNetwork());
-
-      nextPopulation.push(new Agent(new Bird(), new NeuralController(network)));
+      nextPopulation.push({
+        network: parent.network.clone(Evolution.createNeuralNetwork),
+        fitness: 0,
+      });
     }
 
     while (nextPopulation.length < this.population.length) {
-      const parent = parents[Math.floor(Math.random() * parents.length)];
-
-      const controller = parent.getController() as NeuralController;
-
-      const network = controller.getNeuralNetwork().clone(() => Evolution.createNeuralNetwork());
+      const firstParent = this.selectParent(parents);
+      const secondParent = this.selectParent(parents);
+      const network = this.crossover(firstParent.network, secondParent.network);
 
       this.mutate(network);
-
-      nextPopulation.push(new Agent(new Bird(), new NeuralController(network)));
+      nextPopulation.push({ network, fitness: 0 });
     }
 
     this.generation++;
-
     this.population = nextPopulation;
   }
 
-  private mutate(network: NeuralNetwork) {
-    for (const parameter of network.parameters()) {
-      for (let i = 0; i < parameter.values.length; i++) {
-        if (Math.random() >= this.mutationRate) {
-          continue;
-        }
-
-        parameter.values[i] += (Math.random() * 2 - 1) * this.mutationAmount;
-      }
-    }
+  getPopulation(): readonly Individual[] {
+    return this.population;
   }
 
-  selection(): Agent[] {
-    const ranked = [...this.population].sort((a, b) => b.getFitness() - a.getFitness());
-
+  private selection(): Individual[] {
+    const ranked = [...this.population].sort((first, second) => second.fitness - first.fitness);
     const eliteCount = Math.ceil(this.population.length * this.elitePercent);
 
     return ranked.slice(0, eliteCount);
@@ -86,7 +89,38 @@ export class Evolution {
     return this.generation;
   }
 
-  getPopulation() {
-    return this.population;
+  private selectParent(parents: Individual[]) {
+    return parents[Math.floor(Math.random() * parents.length)];
+  }
+
+  private crossover(first: NeuralNetwork, second: NeuralNetwork) {
+    const offspring = first.clone(Evolution.createNeuralNetwork);
+    const offspringParameters = offspring.parameters();
+    const secondParameters = second.parameters();
+
+    for (let parameterIndex = 0; parameterIndex < offspringParameters.length; parameterIndex++) {
+      const offspringValues = offspringParameters[parameterIndex].values;
+      const secondValues = secondParameters[parameterIndex].values;
+
+      for (let valueIndex = 0; valueIndex < offspringValues.length; valueIndex++) {
+        if (Math.random() >= 0.5) {
+          offspringValues[valueIndex] = secondValues[valueIndex];
+        }
+      }
+    }
+
+    return offspring;
+  }
+
+  private mutate(network: NeuralNetwork) {
+    for (const parameter of network.parameters()) {
+      for (let index = 0; index < parameter.values.length; index++) {
+        if (Math.random() >= this.mutationRate) {
+          continue;
+        }
+
+        parameter.values[index] += (Math.random() * 2 - 1) * this.mutationAmount;
+      }
+    }
   }
 }
