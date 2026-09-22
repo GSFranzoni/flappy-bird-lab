@@ -26,3 +26,11 @@ export type Circle = {
   y: number;
   radius: number;
 };
+
+export const GamePhase = {
+  Ready: "ready",
+  Playing: "playing",
+  GameOver: "game-over",
+} as const;
+
+export type GamePhase = (typeof GamePhase)[keyof typeof GamePhase];

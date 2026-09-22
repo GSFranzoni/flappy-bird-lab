@@ -1,9 +1,5 @@
-import { Button } from "@/components/ui/button";
+import { Game } from "@/components/game/game";
 
 export function App() {
-  return (
-    <span className="text-purple-500">
-      <Button>ShadCN Button</Button>
-    </span>
-  );
+  return <Game />;
 }

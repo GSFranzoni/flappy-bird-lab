@@ -1,12 +1,15 @@
 import { PIPE_SPEED } from "@/core/game/constants";
 import type { Rect } from "@/core/game/contracts";
 
+export type PipeDirection = "up" | "down";
+
 export class Pipe {
   constructor(
     private x: number,
     private y: number,
     private width: number,
     private height: number,
+    private direction: PipeDirection,
   ) {}
 
   getHitbox(): Rect {
@@ -20,6 +23,10 @@ export class Pipe {
 
   getX() {
     return this.x;
+  }
+
+  getDirection() {
+    return this.direction;
   }
 
   update(dt: number) {
