@@ -49,7 +49,12 @@ describe("Game Engine", () => {
     game.start();
     game.update(0.1);
 
-    expect(decide).toHaveBeenCalledWith({ birdY: GAME_HEIGHT / 2, birdVelocityY: 0 });
+    expect(decide).toHaveBeenCalledWith({
+      birdY: GAME_HEIGHT / 2,
+      birdVelocityY: 0,
+      pipeDistanceX: GAME_WIDTH - GAME_WIDTH * 0.25 - PIPE_SPEED * 0.1,
+      pipeGapY: GAME_HEIGHT / 2,
+    });
     expect(game.getAgents()[0].getBird().getY()).toBe(310);
     expect(game.getAgents()[0].getBird().getVelocityY()).toBe(100);
     expect(game.getPipes()[0].getX()).toBe(GAME_WIDTH - PIPE_SPEED * 0.1);

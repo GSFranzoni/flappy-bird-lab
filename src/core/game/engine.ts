@@ -76,10 +76,7 @@ export class GameEngine {
 
       const bird = agent.getBird();
 
-      const action = agent.decide({
-        birdY: bird.getY(),
-        birdVelocityY: bird.getVelocityY(),
-      });
+      const action = agent.decide(this.getObservation(agent));
 
       if (action === "flap") {
         bird.flap();
@@ -88,6 +85,7 @@ export class GameEngine {
 
       bird.update(dt);
       this.checkAgentCollision(agent);
+      agent.addFitness(dt);
     }
 
     this.updateScore();
@@ -120,6 +118,26 @@ export class GameEngine {
     }
   }
 
+  private getObservation(agent: Agent) {
+    const bird = agent.getBird();
+
+    const nextPipe = this.pipes.find(
+      (pipe) => pipe.getDirection() === "down" && pipe.getHitbox().x >= bird.getX(),
+    );
+
+    const pipeHitbox = nextPipe?.getHitbox() ?? {
+      x: GAME_WIDTH,
+      y: GAME_HEIGHT,
+    };
+
+    return {
+      birdY: bird.getY(),
+      birdVelocityY: bird.getVelocityY(),
+      pipeDistanceX: pipeHitbox.x - bird.getX(),
+      pipeGapY: pipeHitbox.y / 2 - PIPE_GAP / 2,
+    };
+  }
+
   private removeOffscreenPipes() {
     this.pipes = this.pipes.filter((pipe) => {
       const isVisible = pipe.isVisible();
@@ -145,7 +163,9 @@ export class GameEngine {
 
   private checkAgentCollision(agent: Agent) {
     const bird = agent.getBird().getHitbox();
+
     const hitPipe = this.pipes.some((pipe) => Collision.circleWithRect(bird, pipe.getHitbox()));
+
     const hitWorld = bird.y - bird.radius <= 0 || bird.y + bird.radius >= FLOOR_Y;
 
     if (hitPipe || hitWorld) {

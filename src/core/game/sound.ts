@@ -9,7 +9,13 @@ const sources: Record<SoundEffect, string> = {
 };
 
 export class Sound {
+  constructor(private enabled = true) {}
+
   play(effect: SoundEffect) {
+    if (!this.enabled) {
+      return;
+    }
+
     const AudioConstructor = globalThis.Audio;
 
     if (!AudioConstructor) {

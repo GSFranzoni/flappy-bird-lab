@@ -2,6 +2,8 @@ import { Bird } from "@/core/game/bird";
 import type { Action, Controller, Observation } from "@/core/game/contracts";
 
 export class Agent {
+  private fitness = 0;
+
   private alive = true;
 
   constructor(
@@ -26,8 +28,21 @@ export class Agent {
     this.bird.startFalling();
   }
 
+  addFitness(value: number) {
+    this.fitness += value;
+  }
+
+  getFitness() {
+    return this.fitness;
+  }
+
+  getController() {
+    return this.controller;
+  }
+
   reset() {
     this.bird.reset();
     this.alive = true;
+    this.fitness = 0;
   }
 }

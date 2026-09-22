@@ -17,7 +17,14 @@ describe("Agent", () => {
     expect(agent.isAlive()).toBe(true);
     expect(agent.getBird()).toBe(bird);
     expect(agent.getBird().getY()).toBe(GAME_HEIGHT / 2);
-    expect(agent.decide({ birdY: GAME_HEIGHT / 2, birdVelocityY: 0 })).toBe("none");
-    expect(decide).toHaveBeenCalledWith({ birdY: GAME_HEIGHT / 2, birdVelocityY: 0 });
+    const observation = {
+      birdY: GAME_HEIGHT / 2,
+      birdVelocityY: 0,
+      pipeDistanceX: 200,
+      pipeGapY: GAME_HEIGHT / 2,
+    };
+
+    expect(agent.decide(observation)).toBe("none");
+    expect(decide).toHaveBeenCalledWith(observation);
   });
 });

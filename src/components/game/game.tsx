@@ -1,51 +1,44 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { Agent } from "@/core/game/agent";
+import { Evolution } from "@/core/ai/evolution";
 import { loadAssets } from "@/core/game/assets";
-import { Bird } from "@/core/game/bird";
 import { GAME_HEIGHT, GAME_WIDTH } from "@/core/game/constants";
 import { GameEngine } from "@/core/game/engine";
-import { HumanController } from "@/core/game/human";
 import { GameRenderer } from "@/core/game/renderer";
+import { Sound } from "@/core/game/sound";
 import { useAnimationFrame } from "@/hooks/use-animation-frame";
 
-const controllers = [new HumanController(), new HumanController(), new HumanController()];
+const evolution = new Evolution(100);
 
-const game = new GameEngine([
-  new Agent(new Bird(), controllers[0]),
-  new Agent(new Bird(), controllers[1]),
-  new Agent(new Bird(), controllers[2]),
-]);
-
-const tapKeys = ["Space", "ArrowUp"];
+function newGame() {
+  const nextGame = new GameEngine(evolution.getPopulation(), new Sound(false));
+  nextGame.start();
+  return nextGame;
+}
 
 export function Game() {
+  const [generation, setGeneration] = useState(evolution.getGeneration());
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const gameRef = useRef<GameEngine>(null);
 
   const rendererRef = useRef<GameRenderer | null>(null);
 
   useAnimationFrame((deltaTime, now) => {
-    if (!rendererRef.current) {
+    if (!rendererRef.current || !gameRef.current) {
       return;
     }
 
-    game.update(deltaTime);
-    rendererRef.current.render(game, now);
-  });
-
-  const handleInput = () => {
-    if (game.isGameOver()) {
-      game.restart();
-    } else {
-      game.start();
+    if (gameRef.current.isGameOver()) {
+      evolution.next();
+      gameRef.current = newGame();
+      setGeneration(evolution.getGeneration());
     }
 
-    controllers.forEach((controllers, index) => {
-      setTimeout(() => {
-        controllers.flap();
-      }, index * 100);
-    });
-  };
+    gameRef.current.update(deltaTime);
+    rendererRef.current.render(gameRef.current, now);
+  });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -56,21 +49,12 @@ export function Game() {
       return undefined;
     }
 
+    gameRef.current = newGame();
+
     rendererRef.current = new GameRenderer(context, loadAssets());
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!tapKeys.includes(event.code)) {
-        return;
-      }
-
-      event.preventDefault();
-      handleInput();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      rendererRef.current = null;
     };
   }, []);
 
@@ -79,14 +63,13 @@ export function Game() {
       <section className="w-full max-w-100">
         <canvas
           ref={canvasRef}
-          aria-label="Flappy Bird game. Click, tap, press Space, or press Arrow Up to flap."
+          aria-label="Flappy Bird AI training simulation."
           className="block w-full touch-manipulation rounded-xl shadow-2xl [image-rendering:pixelated]"
           height={GAME_HEIGHT}
-          onPointerDown={() => handleInput()}
           width={GAME_WIDTH}
         />
         <p className="mt-3 text-center text-sm font-medium text-sky-100">
-          Click, tap, Space, or ↑ to flap
+          AI training generation {generation}
         </p>
       </section>
     </main>

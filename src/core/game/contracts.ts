@@ -5,9 +5,8 @@ export type Action = "flap" | "none";
 export interface Observation {
   birdY: number;
   birdVelocityY: number;
-  // TODO: implement it
-  // pipeDistanceX: number;
-  // pipeGapY: number;
+  pipeDistanceX: number;
+  pipeGapY: number;
 }
 
 export interface Controller {
