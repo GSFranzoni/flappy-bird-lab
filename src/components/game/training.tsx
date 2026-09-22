@@ -5,6 +5,7 @@ import { GameCanvas } from "@/components/game/game-canvas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Evolution } from "@/core/ai/evolution";
 import { GameEngine } from "@/core/game/engine";
@@ -76,6 +77,81 @@ function StatRow({
         {value}
       </span>
     </div>
+  );
+}
+
+function TelemetryPanel({
+  generation,
+  metrics,
+  allTimeBest,
+  speed,
+  setSpeed,
+  resetTraining,
+}: {
+  generation: number;
+  metrics: Metrics;
+  allTimeBest: number;
+  speed: Speed;
+  setSpeed: (speed: Speed) => void;
+  resetTraining: () => void;
+}) {
+  return (
+    <>
+      <StatRow label="Generation" value={String(generation).padStart(3, "0")} emphasis />
+      <StatRow label="Alive / Population" value={`${metrics.alive} / ${POPULATION_SIZE}`} />
+      <StatRow label="Best fitness" value={metrics.bestFitness.toFixed(2)} />
+      <StatRow
+        label="All-time best fitness"
+        value={Math.max(allTimeBest, metrics.bestFitness).toFixed(2)}
+        emphasis
+      />
+      <StatRow label="Best score" value={String(metrics.score).padStart(2, "0")} />
+      <Separator className="my-5" />
+      <section aria-labelledby="evolution-title">
+        <h2 id="evolution-title" className="text-xs font-semibold tracking-[0.16em] uppercase">
+          Evolution
+        </h2>
+        <div className="mt-2">
+          <StatRow label="Population" value="1,000" />
+          <StatRow label="Elite" value="10%" />
+          <StatRow label="Mutation rate" value="10%" />
+          <StatRow label="Mutation amount" value="0.20" />
+        </div>
+      </section>
+      <Separator className="my-5" />
+      <section aria-labelledby="speed-title">
+        <div className="flex items-center justify-between">
+          <h2 id="speed-title" className="text-xs font-semibold tracking-[0.16em] uppercase">
+            Simulation speed
+          </h2>
+          <span className="text-muted-foreground font-mono text-[10px]">TICK RATE</span>
+        </div>
+        <ToggleGroup
+          value={[String(speed)]}
+          onValueChange={(values) => {
+            const value = values[0];
+            if (value) {
+              setSpeed(value === "MAX" ? "MAX" : (Number(value) as Exclude<Speed, "MAX">));
+            }
+          }}
+          variant="outline"
+          size="sm"
+          spacing={0}
+          className="mt-3"
+          aria-label="Simulation speed"
+        >
+          {SPEEDS.map((option) => (
+            <ToggleGroupItem key={option} value={String(option)}>
+              {option === "MAX" ? option : `${option}×`}
+            </ToggleGroupItem>
+          ))}
+        </ToggleGroup>
+      </section>
+      <Button onClick={resetTraining} variant="outline" size="sm" className="mt-6 w-full">
+        <RotateCcw />
+        Reset training
+      </Button>
+    </>
   );
 }
 
@@ -159,93 +235,38 @@ export function Training() {
           />
         </section>
 
-        <aside aria-label="Training controls">
+        <aside aria-label="Training controls" className="hidden lg:block">
           <Card>
             <CardHeader>
               <CardTitle className="text-xs tracking-[0.16em] uppercase">
                 Training telemetry
               </CardTitle>
             </CardHeader>
-
             <CardContent>
-              <StatRow label="Generation" value={String(generation).padStart(3, "0")} emphasis />
-
-              <StatRow label="Alive / Population" value={`${metrics.alive} / ${POPULATION_SIZE}`} />
-
-              <StatRow label="Best fitness" value={metrics.bestFitness.toFixed(2)} />
-
-              <StatRow label="All-time best fitness" value={allTimeBest.toFixed(2)} emphasis />
-
-              <StatRow label="Best score" value={String(metrics.score).padStart(2, "0")} />
-
-              <Separator className="my-5" />
-
-              <section aria-labelledby="evolution-title">
-                <h2
-                  id="evolution-title"
-                  className="text-xs font-semibold tracking-[0.16em] uppercase"
-                >
-                  Evolution
-                </h2>
-
-                <div className="mt-2">
-                  <StatRow label="Population" value="1,000" />
-
-                  <StatRow label="Elite" value="10%" />
-
-                  <StatRow label="Mutation rate" value="10%" />
-
-                  <StatRow label="Mutation amount" value="0.20" />
-                </div>
-              </section>
-
-              <Separator className="my-5" />
-
-              <section aria-labelledby="speed-title">
-                <div className="flex items-center justify-between">
-                  <h2
-                    id="speed-title"
-                    className="text-xs font-semibold tracking-[0.16em] uppercase"
-                  >
-                    Simulation speed
-                  </h2>
-
-                  <span className="text-muted-foreground font-mono text-[10px]">TICK RATE</span>
-                </div>
-
-                <ToggleGroup
-                  value={[String(speed)]}
-                  onValueChange={(values) => {
-                    const value = values[0];
-
-                    if (!value) {
-                      return;
-                    }
-
-                    setSpeed(value === "MAX" ? "MAX" : (Number(value) as Exclude<Speed, "MAX">));
-                  }}
-                  variant="outline"
-                  size="sm"
-                  spacing={0}
-                  className="mt-3"
-                  aria-label="Simulation speed"
-                >
-                  {SPEEDS.map((option) => (
-                    <ToggleGroupItem key={option} value={String(option)}>
-                      {option === "MAX" ? option : `${option}×`}
-                    </ToggleGroupItem>
-                  ))}
-                </ToggleGroup>
-              </section>
-
-              <Button onClick={resetTraining} variant="outline" size="sm" className="mt-6 w-full">
-                <RotateCcw />
-                Reset training
-              </Button>
+              <TelemetryPanel
+                {...{ generation, metrics, allTimeBest, speed, setSpeed, resetTraining }}
+              />
             </CardContent>
           </Card>
         </aside>
       </div>
+      <Sheet>
+        <SheetTrigger
+          render={<Button variant="outline" className="fixed right-4 bottom-4 z-40 lg:hidden" />}
+        >
+          Telemetry
+        </SheetTrigger>
+        <SheetContent className="w-[90%] lg:hidden">
+          <SheetHeader>
+            <SheetTitle>Training telemetry</SheetTitle>
+          </SheetHeader>
+          <div className="px-6 pb-6">
+            <TelemetryPanel
+              {...{ generation, metrics, allTimeBest, speed, setSpeed, resetTraining }}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
