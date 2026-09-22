@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { Agent } from "@/core/game/agent";
 import { Bird } from "@/core/game/bird";
@@ -7,6 +7,8 @@ import {
   FLOOR_Y,
   GAME_HEIGHT,
   GAME_WIDTH,
+  PIPE_GAP,
+  PIPE_GAP_MARGIN,
   PIPE_SPEED,
   PIPE_WIDTH,
 } from "@/core/game/constants";
@@ -20,7 +22,11 @@ const controller = (action: "flap" | "none" = "none") => ({
 const agent = (action: "flap" | "none" = "none") => new Agent(new Bird(), controller(action));
 
 describe("Game Engine", () => {
-  it("starts with the bird centered and a pipe pair around the gap", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("starts with the bird centered and a pipe pair with a valid gap", () => {
     const game = new GameEngine([agent()]);
     const [topPipe, bottomPipe] = game.getPipes();
 
@@ -29,13 +35,11 @@ describe("Game Engine", () => {
       y: GAME_HEIGHT / 2,
       radius: BIRD_RADIUS,
     });
-    expect(topPipe.getHitbox()).toEqual({ x: GAME_WIDTH, y: 0, width: PIPE_WIDTH, height: 225 });
-    expect(bottomPipe.getHitbox()).toEqual({
-      x: GAME_WIDTH,
-      y: 375,
-      width: PIPE_WIDTH,
-      height: FLOOR_Y - 375,
-    });
+    expect(topPipe.getHitbox()).toMatchObject({ x: GAME_WIDTH, y: 0, width: PIPE_WIDTH });
+    expect(bottomPipe.getHitbox()).toMatchObject({ x: GAME_WIDTH, width: PIPE_WIDTH });
+    expect(topPipe.getHitbox().height).toBeGreaterThanOrEqual(40);
+    expect(bottomPipe.getHitbox().y - topPipe.getHitbox().height).toBe(PIPE_GAP);
+    expect(bottomPipe.getHitbox().y + bottomPipe.getHitbox().height).toBe(FLOOR_Y);
     expect(topPipe.getDirection()).toBe("up");
     expect(bottomPipe.getDirection()).toBe("down");
     expect(game.getScore()).toBe(0);
@@ -53,7 +57,7 @@ describe("Game Engine", () => {
       birdY: GAME_HEIGHT / 2,
       birdVelocityY: 0,
       pipeDistanceX: GAME_WIDTH - GAME_WIDTH * 0.25 - PIPE_SPEED * 0.1,
-      pipeGapY: GAME_HEIGHT / 2,
+      pipeGapY: game.getPipes()[1].getHitbox().y - PIPE_GAP / 2,
     });
     expect(game.getAgents()[0].getBird().getY()).toBe(310);
     expect(game.getAgents()[0].getBird().getVelocityY()).toBe(100);
@@ -91,6 +95,11 @@ describe("Game Engine", () => {
   });
 
   it("ends when the bird overlaps a pipe", () => {
+    const minimumGapY = PIPE_GAP / 2 + PIPE_GAP_MARGIN;
+    const maximumGapY = FLOOR_Y - PIPE_GAP / 2 - PIPE_GAP_MARGIN;
+    vi.spyOn(Math, "random").mockReturnValue(
+      (GAME_HEIGHT / 2 - minimumGapY) / (maximumGapY - minimumGapY),
+    );
     const game = new GameEngine([agent()]);
     const bird = game.getAgents()[0].getBird();
 

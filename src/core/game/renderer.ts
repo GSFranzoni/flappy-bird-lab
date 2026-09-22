@@ -31,18 +31,25 @@ export class GameRenderer {
 
   private drawPipes(pipes: Pipe[]) {
     for (const pipe of pipes) {
-      const hitbox = pipe.getHitbox();
-
-      if (pipe.getDirection() === "up") {
-        this.context.save();
-        this.context.translate(hitbox.x, hitbox.height);
-        this.context.scale(1, -1);
-        this.context.drawImage(this.assets.pipe, 0, 0, hitbox.width, hitbox.height);
-        this.context.restore();
-      } else {
-        this.context.drawImage(this.assets.pipe, hitbox.x, hitbox.y, hitbox.width, hitbox.height);
-      }
+      this.drawPipe(pipe);
     }
+  }
+
+  private drawPipe(pipe: Pipe) {
+    const hitbox = pipe.getHitbox();
+    const height = (this.assets.pipe.height / this.assets.pipe.width) * hitbox.width;
+
+    this.context.save();
+
+    if (pipe.getDirection() === "up") {
+      this.context.translate(hitbox.x, hitbox.y + hitbox.height);
+      this.context.scale(1, -1);
+    } else {
+      this.context.translate(hitbox.x, hitbox.y);
+    }
+
+    this.context.drawImage(this.assets.pipe, 0, 0, hitbox.width, height);
+    this.context.restore();
   }
 
   private drawBird(bird: Bird, now: number) {

@@ -5,6 +5,7 @@ import {
   GAME_HEIGHT,
   GAME_WIDTH,
   PIPE_GAP,
+  PIPE_GAP_MARGIN,
   PIPE_SPAWN_INTERVAL,
   PIPE_WIDTH,
 } from "@/core/game/constants";
@@ -134,7 +135,7 @@ export class GameEngine {
       birdY: bird.getY(),
       birdVelocityY: bird.getVelocityY(),
       pipeDistanceX: pipeHitbox.x - bird.getX(),
-      pipeGapY: pipeHitbox.y / 2 - PIPE_GAP / 2,
+      pipeGapY: pipeHitbox.y - PIPE_GAP / 2,
     };
   }
 
@@ -151,7 +152,9 @@ export class GameEngine {
   }
 
   private spawnPipes() {
-    const gapY = GAME_HEIGHT / 2;
+    const minimumGapY = PIPE_GAP / 2 + PIPE_GAP_MARGIN;
+    const maximumGapY = FLOOR_Y - PIPE_GAP / 2 - PIPE_GAP_MARGIN;
+    const gapY = minimumGapY + Math.random() * (maximumGapY - minimumGapY);
 
     const gapTop = gapY - PIPE_GAP / 2;
     const gapBottom = gapY + PIPE_GAP / 2;

@@ -7,6 +7,7 @@ export const BIRD_RADIUS = 15;
 export const PIPE_SPEED = 150; // px/s
 export const PIPE_WIDTH = 60;
 export const PIPE_GAP = 150;
+export const PIPE_GAP_MARGIN = 40;
 export const PIPE_SPAWN_INTERVAL = 1.5; // seconds
 
 export const GAME_WIDTH = 400;
