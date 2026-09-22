@@ -25,7 +25,7 @@ export default defineConfig({
   plugins: [react(), babel({ presets: [reactCompilerPreset()] }), tailwindcss()],
   resolve: {
     alias: {
-      "@/": path.resolve(import.meta.dirname, "src"),
+      "@": path.resolve(import.meta.dirname, "src"),
     },
   },
 });
