@@ -14,10 +14,11 @@ import { Sound } from "@/core/game/sound";
 import { useAnimationFrame } from "@/hooks/use-animation-frame";
 
 const POPULATION_SIZE = 1000;
+
 const SPEEDS = [1, 5, 20, "MAX"] as const;
 
 type Speed = (typeof SPEEDS)[number];
-type FitnessPoint = { generation: number; fitness: number };
+
 type Metrics = { alive: number; bestFitness: number; score: number };
 
 function createEvolution() {

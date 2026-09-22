@@ -1,12 +1,22 @@
+import { createRouter, RouterProvider } from "@tanstack/react-router";
+import { ThemeProvider } from "next-themes";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
-import { App } from "@/app";
+import { routeTree } from "./gen/route-tree.gen";
 
-import "./index.css";
+const router = createRouter({ routeTree });
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: typeof router;
+  }
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <ThemeProvider attribute="class" defaultTheme="light">
+      <RouterProvider router={router} />
+    </ThemeProvider>
   </StrictMode>,
 );
