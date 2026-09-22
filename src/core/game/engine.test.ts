@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { Agent } from "@/core/game/agent";
+import { Bird } from "@/core/game/bird";
 import {
   BIRD_RADIUS,
   FLOOR_Y,
@@ -15,12 +17,14 @@ const controller = (action: "flap" | "none" = "none") => ({
   decide: vi.fn(() => action),
 });
 
+const agent = (action: "flap" | "none" = "none") => new Agent(new Bird(), controller(action));
+
 describe("Game Engine", () => {
   it("starts with the bird centered and a pipe pair around the gap", () => {
-    const game = new GameEngine(controller());
+    const game = new GameEngine([agent()]);
     const [topPipe, bottomPipe] = game.getPipes();
 
-    expect(game.getBird().getHitbox()).toEqual({
+    expect(game.getAgents()[0].getBird().getHitbox()).toEqual({
       x: GAME_WIDTH * 0.25,
       y: GAME_HEIGHT / 2,
       radius: BIRD_RADIUS,
@@ -40,50 +44,50 @@ describe("Game Engine", () => {
 
   it("updates the bird and pipes and supplies the controller observation", () => {
     const decide = vi.fn(() => "none" as const);
-    const game = new GameEngine({ decide });
+    const game = new GameEngine([new Agent(new Bird(), { decide })]);
 
     game.start();
     game.update(0.1);
 
     expect(decide).toHaveBeenCalledWith({ birdY: GAME_HEIGHT / 2, birdVelocityY: 0 });
-    expect(game.getBird().getY()).toBe(310);
-    expect(game.getBird().getVelocityY()).toBe(100);
+    expect(game.getAgents()[0].getBird().getY()).toBe(310);
+    expect(game.getAgents()[0].getBird().getVelocityY()).toBe(100);
     expect(game.getPipes()[0].getX()).toBe(GAME_WIDTH - PIPE_SPEED * 0.1);
   });
 
   it("applies a flap action before updating the bird", () => {
     const sound = new Sound();
     const play = vi.spyOn(sound, "play");
-    const game = new GameEngine(controller("flap"), sound);
+    const game = new GameEngine([agent("flap")], sound);
 
     game.start();
     game.update(0.1);
 
-    expect(game.getBird().getVelocityY()).toBe(-250);
-    expect(game.getBird().getY()).toBe(275);
+    expect(game.getAgents()[0].getBird().getVelocityY()).toBe(-250);
+    expect(game.getAgents()[0].getBird().getY()).toBe(275);
     expect(play).toHaveBeenCalledWith("wing");
   });
 
   it("ends when the bird hits the top or bottom world boundary", () => {
-    const topGame = new GameEngine(controller());
+    const topGame = new GameEngine([agent()]);
     for (let i = 0; i < 12; i += 1) {
-      topGame.getBird().flap();
-      topGame.getBird().update(0.1);
+      topGame.getAgents()[0].getBird().flap();
+      topGame.getAgents()[0].getBird().update(0.1);
     }
     topGame.start();
     topGame.update(0);
     expect(topGame.isGameOver()).toBe(true);
 
-    const bottomGame = new GameEngine(controller());
-    bottomGame.getBird().update(0.4);
+    const bottomGame = new GameEngine([agent()]);
+    bottomGame.getAgents()[0].getBird().update(0.4);
     bottomGame.start();
     bottomGame.update(0.05);
     expect(bottomGame.isGameOver()).toBe(true);
   });
 
   it("ends when the bird overlaps a pipe", () => {
-    const game = new GameEngine(controller());
-    const bird = game.getBird();
+    const game = new GameEngine([agent()]);
+    const bird = game.getAgents()[0].getBird();
 
     bird.flap();
     bird.update(0.1);
@@ -102,7 +106,7 @@ describe("Game Engine", () => {
   it("increments the score after the bird clears a pipe pair", () => {
     const sound = new Sound();
     const play = vi.spyOn(sound, "play");
-    const game = new GameEngine(controller(), sound);
+    const game = new GameEngine([agent()], sound);
 
     game.getPipes()[0].update(2.5);
     game.getPipes()[1].update(2.5);
@@ -115,23 +119,23 @@ describe("Game Engine", () => {
 
   it("does not update after game over", () => {
     const decide = vi.fn(() => "none" as const);
-    const game = new GameEngine({ decide });
+    const game = new GameEngine([new Agent(new Bird(), { decide })]);
 
-    game.getBird().update(1);
+    game.getAgents()[0].getBird().update(1);
     game.start();
     game.update(0);
-    const yAtGameOver = game.getBird().getY();
+    const yAtGameOver = game.getAgents()[0].getBird().getY();
     const pipeXAtGameOver = game.getPipes()[0].getX();
 
     game.update(1);
 
     expect(decide).toHaveBeenCalledTimes(1);
-    expect(game.getBird().getY()).toBe(yAtGameOver);
+    expect(game.getAgents()[0].getBird().getY()).toBe(yAtGameOver);
     expect(game.getPipes()[0].getX()).toBe(pipeXAtGameOver);
   });
 
   it("resets game state when restarted", () => {
-    const game = new GameEngine(controller());
+    const game = new GameEngine([agent()]);
 
     game.start();
     game.update(1);
@@ -139,6 +143,46 @@ describe("Game Engine", () => {
 
     game.restart();
     expect(game.isGameOver()).toBe(false);
-    expect(game.getBird().getY()).toBe(GAME_HEIGHT / 2);
+    expect(game.getAgents()[0].getBird().getY()).toBe(GAME_HEIGHT / 2);
+  });
+
+  it("updates each alive agent while moving shared pipes once", () => {
+    const firstDecide = vi.fn(() => "none" as const);
+    const secondDecide = vi.fn(() => "flap" as const);
+    const game = new GameEngine([
+      new Agent(new Bird(), { decide: firstDecide }),
+      new Agent(new Bird(), {
+        decide: secondDecide,
+      }),
+    ]);
+
+    game.start();
+    game.update(0.1);
+
+    expect(firstDecide).toHaveBeenCalledOnce();
+    expect(secondDecide).toHaveBeenCalledOnce();
+    expect(game.getAgents()[0].getBird().getY()).toBe(310);
+    expect(game.getAgents()[1].getBird().getY()).toBe(275);
+    expect(game.getPipes()[0].getX()).toBe(GAME_WIDTH - PIPE_SPEED * 0.1);
+  });
+
+  it("kills only the colliding agent and ends after all agents die", () => {
+    const first = agent();
+    const second = agent();
+    const game = new GameEngine([first, second]);
+
+    first.getBird().update(1);
+    game.start();
+    game.update(0);
+
+    expect(first.isAlive()).toBe(false);
+    expect(second.isAlive()).toBe(true);
+    expect(game.isGameOver()).toBe(false);
+
+    second.getBird().update(1);
+    game.update(0);
+
+    expect(second.isAlive()).toBe(false);
+    expect(game.isGameOver()).toBe(true);
   });
 });

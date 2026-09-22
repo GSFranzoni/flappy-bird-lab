@@ -1,7 +1,6 @@
-import { Bird } from "@/core/game/bird";
+import { Agent } from "@/core/game/agent";
 import { Collision } from "@/core/game/collision";
 import {
-  BIRD_RADIUS,
   FLOOR_Y,
   GAME_HEIGHT,
   GAME_WIDTH,
@@ -9,13 +8,11 @@ import {
   PIPE_SPAWN_INTERVAL,
   PIPE_WIDTH,
 } from "@/core/game/constants";
-import { GamePhase, type Controller } from "@/core/game/contracts";
+import { GamePhase } from "@/core/game/contracts";
 import { Pipe } from "@/core/game/pipe";
 import { Sound } from "@/core/game/sound";
 
 export class GameEngine {
-  private bird!: Bird;
-
   private pipes: Pipe[] = [];
 
   private score = 0;
@@ -27,7 +24,7 @@ export class GameEngine {
   private scoredPipes = new Set<Pipe>();
 
   constructor(
-    private controller: Controller,
+    private agents: Agent[],
     private sound: Sound = new Sound(),
   ) {
     this.reset();
@@ -45,7 +42,10 @@ export class GameEngine {
   }
 
   private reset() {
-    this.bird = new Bird(GAME_WIDTH * 0.25, GAME_HEIGHT / 2, BIRD_RADIUS);
+    for (const agent of this.agents) {
+      agent.reset();
+    }
+
     this.pipes = [];
     this.score = 0;
     this.phase = GamePhase.Ready;
@@ -59,24 +59,29 @@ export class GameEngine {
       return;
     }
 
-    const action = this.controller.decide({
-      birdY: this.bird.getY(),
-      birdVelocityY: this.bird.getVelocityY(),
-    });
-
-    if (action === "flap") {
-      this.bird.flap();
-      this.sound.play("wing");
-    }
-
-    this.bird.update(dt);
-
     for (const pipe of this.pipes) {
       pipe.update(dt);
+    }
 
-      if (Collision.circleWithRect(this.bird.getHitbox(), pipe.getHitbox())) {
-        this.endGame();
+    for (const agent of this.agents) {
+      if (!agent.isAlive()) {
+        continue;
       }
+
+      const bird = agent.getBird();
+
+      const action = agent.decide({
+        birdY: bird.getY(),
+        birdVelocityY: bird.getVelocityY(),
+      });
+
+      if (action === "flap") {
+        bird.flap();
+        this.sound.play("wing");
+      }
+
+      bird.update(dt);
+      this.checkAgentCollision(agent);
     }
 
     this.updateScore();
@@ -88,18 +93,20 @@ export class GameEngine {
       this.spawnPipes();
     }
 
-    this.checkWorldCollision();
+    if (this.agents.every((agent) => !agent.isAlive())) {
+      this.endGame();
+    }
   }
 
   private updateScore() {
-    const birdX = this.bird.getX();
-
     for (const pipe of this.pipes) {
       const hitbox = pipe.getHitbox();
       const isTopPipe = pipe.getDirection() === "up";
-      const hasPassedBird = hitbox.x + hitbox.width < birdX;
+      const hasPassedAnAgent = this.agents.some(
+        (agent) => hitbox.x + hitbox.width < agent.getBird().getX(),
+      );
 
-      if (isTopPipe && hasPassedBird && !this.scoredPipes.has(pipe)) {
+      if (isTopPipe && hasPassedAnAgent && !this.scoredPipes.has(pipe)) {
         this.scoredPipes.add(pipe);
         this.score += 1;
         this.sound.play("point");
@@ -131,11 +138,14 @@ export class GameEngine {
     this.pipes.push(new Pipe(GAME_WIDTH, gapBottom, PIPE_WIDTH, FLOOR_Y - gapBottom, "down"));
   }
 
-  private checkWorldCollision() {
-    const bird = this.bird.getHitbox();
+  private checkAgentCollision(agent: Agent) {
+    const bird = agent.getBird().getHitbox();
+    const hitPipe = this.pipes.some((pipe) => Collision.circleWithRect(bird, pipe.getHitbox()));
+    const hitWorld = bird.y - bird.radius <= 0 || bird.y + bird.radius >= FLOOR_Y;
 
-    if (bird.y - bird.radius <= 0 || bird.y + bird.radius >= FLOOR_Y) {
-      this.endGame();
+    if (hitPipe || hitWorld) {
+      agent.kill();
+      this.sound.play("hit");
     }
   }
 
@@ -145,12 +155,11 @@ export class GameEngine {
     }
 
     this.phase = GamePhase.GameOver;
-    this.sound.play("hit");
     this.sound.play("die");
   }
 
-  getBird() {
-    return this.bird;
+  getAgents() {
+    return this.agents;
   }
 
   getPipes() {

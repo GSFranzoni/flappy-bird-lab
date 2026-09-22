@@ -1,4 +1,5 @@
 import type { Assets } from "@/core/game/assets";
+import type { Agent } from "@/core/game/agent";
 import type { Bird } from "@/core/game/bird";
 import { FLOOR_HEIGHT, GAME_HEIGHT, GAME_WIDTH } from "@/core/game/constants";
 import type { GameEngine } from "@/core/game/engine";
@@ -14,7 +15,7 @@ export class GameRenderer {
     this.context.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
     this.drawBackground();
     this.drawPipes(game.getPipes());
-    this.drawBird(game.getBird(), now);
+    this.drawBirds(game.getAgents(), now);
     this.drawFloor();
     this.drawScore(game.getScore());
 
@@ -53,6 +54,12 @@ export class GameRenderer {
     this.context.rotate(rotation);
     this.context.drawImage(birdImage, -20, -14, 40, 28);
     this.context.restore();
+  }
+
+  private drawBirds(agents: Agent[], now: number) {
+    for (const agent of agents) {
+      this.drawBird(agent.getBird(), now);
+    }
   }
 
   private drawFloor() {

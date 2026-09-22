@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 
+import { Agent } from "@/core/game/agent";
 import { loadAssets } from "@/core/game/assets";
+import { Bird } from "@/core/game/bird";
 import { GAME_HEIGHT, GAME_WIDTH } from "@/core/game/constants";
 import { GameEngine } from "@/core/game/engine";
 import { HumanController } from "@/core/game/human";
@@ -9,7 +11,11 @@ import { useAnimationFrame } from "@/hooks/use-animation-frame";
 
 const controller = new HumanController();
 
-const game = new GameEngine(controller);
+const game = new GameEngine([
+  new Agent(new Bird(), controller),
+  new Agent(new Bird(), controller),
+  new Agent(new Bird(), controller),
+]);
 
 const tapKeys = ["Space", "ArrowUp"];
 
