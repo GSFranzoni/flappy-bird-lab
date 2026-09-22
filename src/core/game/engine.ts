@@ -122,14 +122,22 @@ export class GameEngine {
   private getObservation(agent: Agent) {
     const bird = agent.getBird();
 
-    const nextPipe = this.pipes.find(
-      (pipe) => pipe.getDirection() === "down" && pipe.getHitbox().x >= bird.getX(),
-    );
+    const nextPipe = this.pipes.find((pipe) => {
+      const hitbox = pipe.getHitbox();
 
-    const pipeHitbox = nextPipe?.getHitbox() ?? {
-      x: GAME_WIDTH,
-      y: GAME_HEIGHT,
-    };
+      return pipe.getDirection() === "down" && hitbox.x + hitbox.width >= bird.getX();
+    });
+
+    const pipeHitbox = nextPipe?.getHitbox();
+
+    if (!pipeHitbox) {
+      return {
+        birdY: bird.getY(),
+        birdVelocityY: bird.getVelocityY(),
+        pipeDistanceX: GAME_WIDTH,
+        pipeGapY: GAME_HEIGHT / 2,
+      };
+    }
 
     return {
       birdY: bird.getY(),
