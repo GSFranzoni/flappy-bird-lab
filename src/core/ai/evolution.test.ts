@@ -41,6 +41,19 @@ describe("Evolution", () => {
     );
   });
 
+  it("restores a generation from a snapshot", () => {
+    const evolution = new Evolution(2, 0.5, 0);
+    evolution.setFitnessResults([1.5, 2.5]);
+    const snapshot = evolution.getSnapshot(7);
+    const restored = new Evolution(2, 0.5, 0);
+
+    restored.restoreSnapshot(snapshot);
+
+    expect(restored.getGeneration()).toBe(1);
+    expect(restored.getAllTimeBestFitness()).toBe(2.5);
+    expect(restored.getSnapshot(7)).toEqual(snapshot);
+  });
+
   it("requires a positive population size", () => {
     expect(() => new Evolution(0)).toThrow("populationSize must be greater than 0");
   });

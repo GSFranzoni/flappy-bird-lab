@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { GameCanvas } from "@/components/game/game-canvas";
+import { GameCanvas } from "@/components/game/canvas";
 import { Agent } from "@/core/game/agent";
 import { Bird } from "@/core/game/bird";
 import { GameEngine } from "@/core/game/engine";
@@ -12,8 +12,8 @@ export function Play() {
 
   const gameRef = useRef(new GameEngine([new Agent(new Bird(), controller)], new Sound()));
 
-  const updateGame = useCallback((game: GameEngine, deltaTime: number) => {
-    game.update(deltaTime);
+  const updateGame = useCallback((deltaTime: number) => {
+    gameRef.current.update(deltaTime);
   }, []);
 
   const handleInput = useCallback(() => {

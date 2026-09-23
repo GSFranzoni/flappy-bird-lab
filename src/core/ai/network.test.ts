@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { LinearLayer } from "@/core/ai/neural-network";
+import { LinearLayer } from "@/core/ai/network";
 
 describe("LinearLayer", () => {
   it("applies weights and biases to produce the requested output size", () => {

@@ -171,18 +171,24 @@ export class NeuralNetwork implements Layer {
     return this.parameters().map((parameter) => [...parameter.values]);
   }
 
-  load(raw: any): void {
+  load(raw: unknown): boolean {
     const state = WeightsSchema.safeParse(raw);
 
-    if (state.error) {
-      return;
-    }
-
     const parameters = this.parameters();
+
+    if (
+      !state.success ||
+      state.data.length !== parameters.length ||
+      state.data.some((values, index) => values.length !== parameters[index].values.length)
+    ) {
+      return false;
+    }
 
     for (let i = 0; i < parameters.length; i++) {
       parameters[i].values.splice(0, parameters[i].values.length, ...state.data[i]);
     }
+
+    return true;
   }
 
   forward(input: Vector): Vector {

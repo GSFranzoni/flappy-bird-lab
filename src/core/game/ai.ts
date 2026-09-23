@@ -1,4 +1,4 @@
-import type { NeuralNetwork } from "@/core/ai/neural-network";
+import type { NeuralNetwork } from "@/core/ai/network";
 import { FLAP_VELOCITY, GAME_HEIGHT, GAME_WIDTH } from "@/core/game/constants";
 import type { Action, Controller, Observation } from "@/core/game/contracts";
 

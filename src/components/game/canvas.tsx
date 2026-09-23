@@ -8,7 +8,7 @@ import { useAnimationFrame } from "@/hooks/use-animation-frame";
 
 type GameCanvasProps = Omit<React.ComponentPropsWithoutRef<"canvas">, "height" | "width"> & {
   gameRef: React.RefObject<GameEngine>;
-  onFrame?: (game: GameEngine, deltaTime: number, now: number) => void;
+  onFrame?: (deltaTime: number, now: number) => void;
 };
 
 export function GameCanvas({ gameRef, onFrame, ...props }: GameCanvasProps) {
@@ -31,8 +31,7 @@ export function GameCanvas({ gameRef, onFrame, ...props }: GameCanvasProps) {
   }, []);
 
   useAnimationFrame((deltaTime, now) => {
-    const game = gameRef.current;
-    onFrame?.(game, deltaTime, now);
+    onFrame?.(deltaTime, now);
     rendererRef.current?.render(gameRef.current, now);
   });
 

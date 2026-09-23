@@ -1,4 +1,5 @@
-import { LinearLayer, NeuralNetwork, ReLULayer, SigmoidLayer } from "@/core/ai/neural-network";
+import { LinearLayer, NeuralNetwork, ReLULayer, SigmoidLayer } from "@/core/ai/network";
+import type { TrainingProgress } from "@/core/ai/progress";
 
 export type Individual = {
   network: NeuralNetwork;
@@ -7,6 +8,8 @@ export type Individual = {
 
 export class Evolution {
   private generation = 1;
+
+  private allTimeBest = 0;
 
   private population: Individual[];
 
@@ -47,6 +50,8 @@ export class Evolution {
     for (let index = 0; index < this.population.length; index++) {
       this.population[index].fitness = fitnessResults[index];
     }
+
+    this.allTimeBest = Math.max(this.allTimeBest, this.getBestFitness());
   }
 
   next(): void {
@@ -76,6 +81,53 @@ export class Evolution {
 
   getPopulation(): readonly Individual[] {
     return this.population;
+  }
+
+  getSnapshot(allTimeBestScore = 0): TrainingProgress {
+    return {
+      version: 1,
+      generation: this.generation,
+      allTimeBest: this.allTimeBest,
+      allTimeBestScore,
+      population: this.population.map((individual) => ({
+        network: individual.network.export(),
+        fitness: individual.fitness,
+      })),
+    };
+  }
+
+  restoreSnapshot(snapshot: TrainingProgress): void {
+    if (snapshot.population.length !== this.populationSize) {
+      throw new Error("snapshot population must match the population size");
+    }
+
+    const population = snapshot.population.map((individual) => {
+      const network = Evolution.createNeuralNetwork();
+
+      if (!network.load(individual.network)) {
+        throw new Error("snapshot contains an incompatible neural network");
+      }
+
+      return { network, fitness: individual.fitness };
+    });
+
+    this.generation = snapshot.generation;
+    this.allTimeBest = snapshot.allTimeBest;
+    this.population = population;
+  }
+
+  getBestFitness() {
+    let bestFitness = 0;
+
+    for (const individual of this.population) {
+      bestFitness = Math.max(bestFitness, individual.fitness);
+    }
+
+    return bestFitness;
+  }
+
+  getAllTimeBestFitness() {
+    return this.allTimeBest;
   }
 
   private selection(): Individual[] {

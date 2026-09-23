@@ -1,23 +1,28 @@
 import { RotateCcw } from "lucide-react";
 import { useCallback, useRef, useState } from "react";
 
-import { GameCanvas } from "@/components/game/game-canvas";
+import { GameCanvas } from "@/components/game/canvas";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Evolution } from "@/core/ai/evolution";
+import {
+  clearTrainingProgress,
+  loadTrainingProgress,
+  saveTrainingProgress,
+} from "@/core/ai/progress";
 import { Agent } from "@/core/game/agent";
 import { NeuralController } from "@/core/game/ai";
 import { Bird } from "@/core/game/bird";
-import { MAX_SCORE_PER_GENERATION } from "@/core/game/constants";
+import { MAX_SCORE_PER_GENERATION, STATS_UPDATE_INTERVAL } from "@/core/game/constants";
 import { GameEngine } from "@/core/game/engine";
 import { Sound } from "@/core/game/sound";
 
 const POPULATION_SIZE = 1000;
 
-const SPEEDS = [1, 5, 20, "MAX"] as const;
+const SPEEDS = [1, 5, 20, 60] as const;
 
 type Speed = (typeof SPEEDS)[number];
 
@@ -29,6 +34,21 @@ type Metrics = {
 
 function createEvolution() {
   return new Evolution(POPULATION_SIZE);
+}
+
+function createInitialTraining() {
+  const evolution = createEvolution();
+
+  const progress = loadTrainingProgress(POPULATION_SIZE);
+
+  if (progress) {
+    evolution.restoreSnapshot(progress);
+  }
+
+  return {
+    evolution,
+    allTimeBestScore: progress?.allTimeBestScore ?? 0,
+  };
 }
 
 function createGame(evolution: Evolution) {
@@ -92,6 +112,7 @@ function TelemetryPanel({
   generation,
   metrics,
   allTimeBest,
+  allTimeBestScore,
   speed,
   setSpeed,
   resetTraining,
@@ -99,6 +120,7 @@ function TelemetryPanel({
   generation: number;
   metrics: Metrics;
   allTimeBest: number;
+  allTimeBestScore: number;
   speed: Speed;
   setSpeed: (speed: Speed) => void;
   resetTraining: () => void;
@@ -114,6 +136,11 @@ function TelemetryPanel({
         emphasis
       />
       <StatRow label="Best score" value={String(metrics.score).padStart(2, "0")} />
+      <StatRow
+        label="All-time best score"
+        value={String(Math.max(allTimeBestScore, metrics.score)).padStart(2, "0")}
+        emphasis
+      />
       <Separator className="my-5" />
       <section aria-labelledby="evolution-title">
         <h2 id="evolution-title" className="text-xs font-semibold tracking-[0.16em] uppercase">
@@ -136,10 +163,9 @@ function TelemetryPanel({
         </div>
         <ToggleGroup
           value={[String(speed)]}
-          onValueChange={(values) => {
-            const value = values[0];
+          onValueChange={([value]) => {
             if (value) {
-              setSpeed(value === "MAX" ? "MAX" : (Number(value) as Exclude<Speed, "MAX">));
+              setSpeed(Number(value) as Speed);
             }
           }}
           variant="outline"
@@ -150,7 +176,7 @@ function TelemetryPanel({
         >
           {SPEEDS.map((option) => (
             <ToggleGroupItem key={option} value={String(option)}>
-              {option === "MAX" ? option : `${option}×`}
+              {option === 60 ? "Max" : `${option}×`}
             </ToggleGroupItem>
           ))}
         </ToggleGroup>
@@ -163,74 +189,100 @@ function TelemetryPanel({
   );
 }
 
+type Stats = {
+  generation: number;
+  metrics: Metrics;
+  allTimeBest: number;
+  allTimeBestScore: number;
+};
+
 export function Training() {
-  const [initialEvolution] = useState(createEvolution);
+  const [initial] = useState(() => {
+    const training = createInitialTraining();
 
-  const [initialGame] = useState(() => createGame(initialEvolution));
+    return {
+      ...training,
+      game: createGame(training.evolution),
+    };
+  });
 
-  const evolutionRef = useRef<Evolution>(initialEvolution);
+  const evolutionRef = useRef(initial.evolution);
 
-  const gameRef = useRef<GameEngine>(initialGame);
+  const gameRef = useRef(initial.game);
 
   const lastStatsUpdateRef = useRef(0);
 
-  const [generation, setGeneration] = useState(initialEvolution.getGeneration());
-
-  const [metrics, setMetrics] = useState<Metrics>({
-    alive: POPULATION_SIZE,
-    bestFitness: 0,
-    score: 0,
-  });
-
-  const [allTimeBest, setAllTimeBest] = useState(0);
+  const [stats, setStats] = useState<Stats>(() => ({
+    generation: initial.evolution.getGeneration(),
+    metrics: getMetrics(initial.game),
+    allTimeBest: initial.evolution.getAllTimeBestFitness(),
+    allTimeBestScore: initial.allTimeBestScore,
+  }));
 
   const [speed, setSpeed] = useState<Speed>(1);
 
   const updateTraining = useCallback(
-    (game: GameEngine, deltaTime: number, now: number) => {
-      const steps = speed === "MAX" ? 60 : speed;
+    (deltaTime: number, now: number) => {
+      for (let step = 0; step < speed; step++) {
+        if (
+          gameRef.current.isGameOver() ||
+          gameRef.current.getScore() >= MAX_SCORE_PER_GENERATION
+        ) {
+          const evolution = evolutionRef.current;
 
-      for (let step = 0; step < steps; step++) {
-        if (game.isGameOver() || game.getScore() >= MAX_SCORE_PER_GENERATION) {
-          const completed = getMetrics(game);
-          const agents = game.getAgents();
+          const completed = getMetrics(gameRef.current);
 
-          setAllTimeBest((best) => Math.max(best, completed.bestFitness));
+          const allTimeBestScore = Math.max(stats.allTimeBestScore, completed.score);
 
-          const evolution = evolutionRef.current!;
+          evolution.setFitnessResults(
+            gameRef.current.getAgents().map((agent) => agent.getFitness()),
+          );
 
-          evolution.setFitnessResults(agents.map((agent) => agent.getFitness()));
           evolution.next();
 
-          game = createGame(evolution);
-          gameRef.current = game;
+          saveTrainingProgress(evolution.getSnapshot(allTimeBestScore));
 
-          setGeneration(evolution.getGeneration());
+          gameRef.current = createGame(evolution);
+
+          setStats({
+            generation: evolution.getGeneration(),
+            metrics: getMetrics(gameRef.current),
+            allTimeBest: evolution.getAllTimeBestFitness(),
+            allTimeBestScore,
+          });
         }
 
-        game.update(deltaTime);
+        gameRef.current.update(deltaTime);
       }
 
-      if (now - lastStatsUpdateRef.current >= 120) {
+      if (now - lastStatsUpdateRef.current >= STATS_UPDATE_INTERVAL) {
         lastStatsUpdateRef.current = now;
-        setMetrics(getMetrics(game));
+
+        setStats((current) => ({
+          ...current,
+          metrics: getMetrics(gameRef.current),
+        }));
       }
     },
-    [speed],
+    [speed, stats.allTimeBestScore],
   );
 
   const resetTraining = useCallback(() => {
+    clearTrainingProgress();
+
     const evolution = createEvolution();
     const game = createGame(evolution);
 
     evolutionRef.current = evolution;
     gameRef.current = game;
-
     lastStatsUpdateRef.current = 0;
 
-    setGeneration(evolution.getGeneration());
-    setMetrics(getMetrics(game));
-    setAllTimeBest(0);
+    setStats({
+      generation: evolution.getGeneration(),
+      metrics: getMetrics(game),
+      allTimeBest: 0,
+      allTimeBestScore: 0,
+    });
   }, []);
 
   return (
@@ -254,7 +306,12 @@ export function Training() {
             </CardHeader>
             <CardContent>
               <TelemetryPanel
-                {...{ generation, metrics, allTimeBest, speed, setSpeed, resetTraining }}
+                {...{
+                  ...stats,
+                  speed,
+                  setSpeed,
+                  resetTraining,
+                }}
               />
             </CardContent>
           </Card>
@@ -272,7 +329,12 @@ export function Training() {
           </SheetHeader>
           <div className="px-6 pb-6">
             <TelemetryPanel
-              {...{ generation, metrics, allTimeBest, speed, setSpeed, resetTraining }}
+              {...{
+                ...stats,
+                speed,
+                setSpeed,
+                resetTraining,
+              }}
             />
           </div>
         </SheetContent>

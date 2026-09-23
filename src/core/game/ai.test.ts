@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { NeuralNetwork } from "@/core/ai/neural-network";
+import { NeuralNetwork } from "@/core/ai/network";
 import { NeuralController } from "@/core/game/ai";
 
 describe("NeuralController", () => {

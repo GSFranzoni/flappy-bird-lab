@@ -15,3 +15,5 @@ export const GAME_WIDTH = 400;
 export const GAME_HEIGHT = 600;
 export const FLOOR_HEIGHT = 96;
 export const FLOOR_Y = GAME_HEIGHT - FLOOR_HEIGHT;
+
+export const STATS_UPDATE_INTERVAL = 120;
