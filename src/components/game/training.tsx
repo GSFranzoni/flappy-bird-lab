@@ -293,7 +293,7 @@ export function Training() {
             gameRef={gameRef}
             onFrame={updateTraining}
             aria-label="Flappy Bird AI training simulation."
-            className="block w-full rounded-2xl [image-rendering:pixelated]"
+            className="block w-full rounded-4xl [image-rendering:pixelated]"
           />
         </section>
 

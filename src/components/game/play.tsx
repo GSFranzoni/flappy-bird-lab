@@ -52,7 +52,7 @@ export function Play() {
           onFrame={updateGame}
           onClick={handleInput}
           aria-label="Flappy Bird game. Press space or click to flap."
-          className="block w-full cursor-pointer rounded-2xl [image-rendering:pixelated]"
+          className="block w-full cursor-pointer rounded-4xl [image-rendering:pixelated]"
         />
       </section>
     </div>

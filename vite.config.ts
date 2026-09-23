@@ -2,7 +2,6 @@ import { fileURLToPath } from "url";
 
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
-import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
@@ -24,11 +23,6 @@ const getBase = () => {
 export default defineConfig({
   base: getBase(),
   plugins: [
-    tanstackRouter({
-      target: "react",
-      autoCodeSplitting: true,
-      generatedRouteTree: "./src/gen/route-tree.gen.ts",
-    }),
     react(),
     tailwindcss(),
     babel({ presets: [reactCompilerPreset()] }),
