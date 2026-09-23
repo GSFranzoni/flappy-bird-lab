@@ -287,7 +287,7 @@ export function Training() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-      <div className="grid items-start gap-6 lg:grid-cols-[26rem_21rem] lg:justify-center">
+      <div className="grid items-start gap-6 sm:justify-center md:grid-cols-[26rem_19rem]">
         <section aria-label="Flappy Bird training simulation" className="min-w-0">
           <GameCanvas
             gameRef={gameRef}
@@ -297,7 +297,7 @@ export function Training() {
           />
         </section>
 
-        <aside aria-label="Training controls" className="hidden lg:block">
+        <aside aria-label="Training controls" className="hidden md:block">
           <Card>
             <CardHeader>
               <CardTitle className="text-xs tracking-[0.16em] uppercase">
@@ -319,11 +319,11 @@ export function Training() {
       </div>
       <Sheet>
         <SheetTrigger
-          render={<Button variant="outline" className="fixed right-4 bottom-4 z-40 lg:hidden" />}
+          render={<Button variant="outline" className="fixed right-4 bottom-4 z-40 md:hidden" />}
         >
           Telemetry
         </SheetTrigger>
-        <SheetContent className="w-[90%] lg:hidden">
+        <SheetContent className="w-[90%] md:hidden">
           <SheetHeader>
             <SheetTitle>Training telemetry</SheetTitle>
           </SheetHeader>
