@@ -84,6 +84,12 @@ The best 10% of a completed population are copied unchanged. Every remaining net
 - Reset the training run and clear its saved progress.
 - Inspect the pixel-art canvas renderer, scrolling floor, and slower parallax background.
 
+## Improvements
+
+- [ ] Let users configure a training run: population size, elite percentage, mutation rate, mutation amount, and neural-network layers.
+- [ ] Add a richer best-fitness-by-generation history so training runs can be compared over time.
+- [ ] Make saved runs exportable and importable for sharing experiments.
+
 ## Support
 
 If you enjoyed this small neuroevolution experiment, you can support its creator here:
@@ -118,7 +124,7 @@ bun run build
 | `bun run dev`       | Start the Vite development server.        |
 | `bun run build`     | Type-check and create a production build. |
 | `bun run preview`   | Preview the production build locally.     |
-| `bun run test`      | Run the Vitest unit-test suite.            |
+| `bun run test`      | Run the Vitest unit-test suite.           |
 | `bun run lint`      | Run Oxlint.                               |
 | `bun run lint:fix`  | Apply available Oxlint fixes.             |
 | `bun run fmt`       | Format source files with Oxfmt.           |
