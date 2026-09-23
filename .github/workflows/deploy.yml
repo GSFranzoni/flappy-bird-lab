@@ -25,22 +25,23 @@ jobs:
         uses: actions/checkout@v4
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: package.json
       - name: Configure GitHub Pages
         id: pages
         uses: actions/configure-pages@v5
       - name: Install dependencies
         run: bun install --frozen-lockfile
-      - name: Verify and build
+      - name: Test and build
         env:
           VITE_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: |
-          bun run typecheck
           bun run test
           bun run build
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: apps/web/dist
+          path: dist
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
