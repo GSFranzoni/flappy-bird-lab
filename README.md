@@ -1,6 +1,4 @@
-# Flappy Lab
-
-> A browser playground for Flappy Bird, neural networks, and neuroevolution: train a population of birds or play a run yourself.
+# Flappy Bird Lab
 
 [![Live demo](https://img.shields.io/badge/live%20demo-open-34d399?logo=github)](https://gsfranzoni.github.io/flappy-bird/)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
@@ -13,7 +11,7 @@
 
 [Live demo →](https://gsfranzoni.github.io/flappy-bird/)
 
-Flappy Lab is a small Flappy Bird implementation with two ways to interact with the same simulation. In **Play**, one bird is controlled with the keyboard or a click. In **Training**, a population of neural-network controllers flies simultaneously and evolves from one generation to the next.
+Flappy Bird Lab is a small Flappy Bird implementation with two ways to interact with the same simulation. In **Play**, one bird is controlled with the keyboard or a click. In **Training**, a population of neural-network controllers flies simultaneously and evolves from one generation to the next.
 
 The project is deliberately split between the simulation and the genetic algorithm. The game engine owns birds, pipes, collisions, score, sounds, and fitness accumulation. `Evolution` owns only neural networks and fitness values: it selects elites, creates children through uniform crossover, mutates them, and produces the next generation.
 
