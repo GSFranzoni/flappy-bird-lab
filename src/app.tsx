@@ -1,6 +1,6 @@
-import { Play } from "lucide-react";
 import { useState } from "react";
 
+import { Play } from "@/components/game/play";
 import { Training } from "@/components/game/training";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
