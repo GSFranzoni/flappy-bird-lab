@@ -1,11 +1,13 @@
 export type SoundEffect = "die" | "hit" | "point" | "swoosh" | "wing";
 
+const assetUrl = (path: string) => `${import.meta.env.BASE_URL}${path}`;
+
 const sources: Record<SoundEffect, string> = {
-  die: "/sfx/die.ogg",
-  hit: "/sfx/hit.ogg",
-  point: "/sfx/point.ogg",
-  swoosh: "/sfx/swoosh.ogg",
-  wing: "/sfx/wing.ogg",
+  die: assetUrl("sfx/die.ogg"),
+  hit: assetUrl("sfx/hit.ogg"),
+  point: assetUrl("sfx/point.ogg"),
+  swoosh: assetUrl("sfx/swoosh.ogg"),
+  wing: assetUrl("sfx/wing.ogg"),
 };
 
 export class Sound {
