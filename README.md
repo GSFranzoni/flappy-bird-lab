@@ -1,6 +1,6 @@
 # Flappy Bird Lab
 
-[![Live demo](https://img.shields.io/badge/live%20demo-open-34d399?logo=github)](https://gsfranzoni.github.io/flappy-bird/)
+[![Live demo](https://img.shields.io/badge/live%20demo-open-34d399?logo=github)](https://gsfranzoni.github.io/flappy-bird-lab/)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![React](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)](https://react.dev/)
 [![Bun](https://img.shields.io/badge/Bun-1.4-000?logo=bun&logoColor=white)](https://bun.sh/)
@@ -9,7 +9,7 @@
   <img src="public/ui/bird-midflap.png" width="100" alt="Flappy Bird pixel-art sprite" />
 </p>
 
-[Live demo →](https://gsfranzoni.github.io/flappy-bird/)
+[Live demo →](https://gsfranzoni.github.io/flappy-bird-lab/)
 
 Flappy Bird Lab is a small Flappy Bird implementation with two ways to interact with the same simulation. In **Play**, one bird is controlled with the keyboard or a click. In **Training**, a population of neural-network controllers flies simultaneously and evolves from one generation to the next.
 
